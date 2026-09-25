@@ -35,7 +35,10 @@
         <label class="sr" for="schedule">Sheeted Print Schedule</label>
         <textarea id="schedule" spellcheck="false" placeholder="Paste the batch table here…"></textarea>
         <div class="row">
-          <button id="sheet" type="button" class="btn ghost">Open pull sheet</button>
+          <button id="sheet" type="button" class="btn ghost">
+            <span class="btn-label">Open pull sheet</span>
+            <span class="circle-overlay" aria-hidden="true"></span>
+          </button>
         </div>
       </section>
 
@@ -49,10 +52,13 @@
           <span class="drop-icon" aria-hidden="true">↧</span>
           <p><strong>Drop the PkgLbls PDF here</strong><br>or <span class="link">choose a file</span></p>
           <input id="file" type="file" accept="application/pdf,.pdf">
+          <p id="file-name" class="file-name" aria-live="polite"></p>
         </div>
-        <p id="file-name" class="file-name" aria-live="polite"></p>
         <div class="row">
-          <button id="go" type="button" class="btn primary">Reorder &amp; download</button>
+          <button id="go" type="button" class="btn primary">
+            <span class="btn-label">Reorder &amp; download</span>
+            <span class="circle-overlay" aria-hidden="true"></span>
+          </button>
         </div>
       </section>
     </div>
