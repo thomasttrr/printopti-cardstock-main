@@ -1,0 +1,15 @@
+{
+  "name": "printopti-wasm",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "printopti_wasm_bg.wasm",
+    "printopti_wasm.js",
+    "printopti_wasm.d.ts"
+  ],
+  "main": "printopti_wasm.js",
+  "types": "printopti_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
