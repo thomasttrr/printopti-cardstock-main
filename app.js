@@ -138,7 +138,11 @@ go.addEventListener("click", async () => {
     return;
   }
   const text = scheduleText();
-  if (!text) return;
+  if (!text) {
+    setStatus("Step 1 first: paste the Sheeted Print Schedule above, then click Reorder & download.", true);
+    schedule.focus();
+    return;
+  }
   go.disabled = true;
   setStatus("Reading labels…");
   try {
