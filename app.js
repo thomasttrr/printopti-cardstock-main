@@ -37,15 +37,16 @@ function scheduleText() {
 }
 
 function takeFile(file) {
-  if (!file) return;
+  if (!file) return false;
   if (file.size > MAX_PDF_BYTES) {
     pdfFile = null;
     fileName.textContent = "";
     setStatus("That PDF is too large to read.", true);
-    return;
+    return false;
   }
   pdfFile = file;
   fileName.textContent = file.name;
+  return true;
 }
 
 fileInput.addEventListener("change", () => takeFile(fileInput.files[0]));
@@ -117,6 +118,7 @@ sheet.addEventListener("click", async () => {
 
 go.addEventListener("click", async () => {
   unmapped.innerHTML = "";
+  if (!pdfFile) takeFile(fileInput.files[0]);
   if (!pdfFile) {
     setStatus("Choose the package-label PDF.", true);
     return;
