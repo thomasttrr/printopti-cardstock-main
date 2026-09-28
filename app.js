@@ -3,7 +3,7 @@ import { PDFDocument } from "./vendor/pdf-lib.esm.min.js";
 import init, { plan_order, pull_sheet } from "./pkg/printopti_wasm.js";
 
 const MAX_SCHEDULE_CHARS = 2 * 1024 * 1024;
-const MAX_PDF_BYTES = 25 * 1024 * 1024;
+const MAX_PDF_BYTES = 200 * 1024 * 1024;
 
 pdfjs.GlobalWorkerOptions.workerSrc = "./vendor/pdf.worker.mjs";
 
@@ -21,6 +21,15 @@ let ready = null;
 function setStatus(message, isError) {
   status.textContent = message;
   status.className = isError ? "err" : "";
+}
+
+function formatMB(bytes) {
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+function pdfTooLargeMessage(file) {
+  const size = file && typeof file.size === "number" ? " (" + formatMB(file.size) + ")" : "";
+  return "That PDF" + size + " is larger than the " + formatMB(MAX_PDF_BYTES) + " limit. Try a smaller or compressed PDF.";
 }
 
 function scheduleText() {
@@ -41,11 +50,12 @@ function takeFile(file) {
   if (file.size > MAX_PDF_BYTES) {
     pdfFile = null;
     fileName.textContent = "";
-    setStatus("That PDF is too large to read.", true);
+    setStatus(pdfTooLargeMessage(file), true);
     return false;
   }
   pdfFile = file;
-  fileName.textContent = file.name;
+  fileName.textContent = file.name + " (" + formatMB(file.size) + ")";
+  setStatus("PDF ready: " + file.name + " (" + formatMB(file.size) + ").");
   return true;
 }
 
@@ -124,7 +134,7 @@ go.addEventListener("click", async () => {
     return;
   }
   if (pdfFile.size > MAX_PDF_BYTES) {
-    setStatus("That PDF is too large to read.", true);
+    setStatus(pdfTooLargeMessage(pdfFile), true);
     return;
   }
   const text = scheduleText();
@@ -138,9 +148,12 @@ go.addEventListener("click", async () => {
     const loaded = await pdfjs.getDocument({ data: bytes.slice() }).promise;
     const labels = [];
     for (let i = 1; i <= loaded.numPages; i += 1) {
+      if (i % 25 === 0 || i === loaded.numPages) setStatus("Reading labels… " + i + " of " + loaded.numPages);
       const page = await loaded.getPage(i);
       labels.push(parseLabel(pageText(await page.getTextContent()), i - 1));
+      page.cleanup();
     }
+    await loaded.destroy();
     setStatus("Matching the pull sheet…");
     const result = JSON.parse(plan_order(text, JSON.stringify(labels)));
     const order = result.order;
