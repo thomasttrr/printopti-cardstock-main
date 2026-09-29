@@ -2,9 +2,13 @@ import * as pdfjs from "./vendor/pdf.mjs";
 import { PDFDocument } from "./vendor/pdf-lib.esm.min.js";
 import init, { plan_order, pull_sheet } from "./pkg/printopti_wasm.js";
 import { normalizeSchedule } from "./schedule-normalize.js";
+import { clearSchedule, countJobs, loadSchedule, saveSchedule, SAVE } from "./schedule-store.js";
 
 const MAX_SCHEDULE_CHARS = 2 * 1024 * 1024;
 const MAX_PDF_BYTES = 200 * 1024 * 1024;
+// A paste is worth keeping the moment it lands; debounce so a 149-row paste doesn't
+// hit localStorage on every keystroke.
+const SAVE_DEBOUNCE_MS = 400;
 
 pdfjs.GlobalWorkerOptions.workerSrc = "./vendor/pdf.worker.mjs";
 
@@ -13,6 +17,8 @@ const fileInput = document.querySelector("#file");
 const fileName = document.querySelector("#file-name");
 const schedule = document.querySelector("#schedule");
 const sheet = document.querySelector("#sheet");
+const clear = document.querySelector("#clear");
+const savedNote = document.querySelector("#saved-note");
 const go = document.querySelector("#go");
 const status = document.querySelector("#status");
 const unmapped = document.querySelector("#unmapped");
@@ -45,6 +51,79 @@ function scheduleText() {
   }
   return normalizeSchedule(text);
 }
+
+// --- Local paste memory -------------------------------------------------------
+// Keep the paste in this browser so a refresh or a closed tab can't cost a whole
+// batch. Reaching for localStorage can itself throw (locked-down privacy modes), so
+// resolve it once and treat "no storage available" as a supported state.
+let pasteStore = null;
+try {
+  pasteStore = window.localStorage;
+} catch (err) {
+  pasteStore = null;
+}
+
+let saveTimer = 0;
+
+function updateClearState() {
+  if (clear) clear.disabled = !schedule.value.trim();
+}
+
+function noteSaved(status) {
+  if (!savedNote) return;
+  if (status === SAVE.OK) {
+    const jobs = countJobs(schedule.value);
+    savedNote.textContent =
+      "Saved in this browser" + (jobs ? " · " + jobs + " jobs" : "") + " — survives a refresh. Nothing uploaded.";
+  } else if (status === SAVE.TOO_LARGE) {
+    savedNote.textContent = "This paste is too large to save locally — it will be lost if you refresh.";
+  } else if (status === SAVE.UNAVAILABLE) {
+    savedNote.textContent = "This browser is blocking local saves — the paste will be lost if you refresh.";
+  } else {
+    savedNote.textContent = "";
+  }
+}
+
+function saveNow() {
+  window.clearTimeout(saveTimer);
+  saveTimer = 0;
+  noteSaved(saveSchedule(pasteStore, schedule.value));
+}
+
+function saveSoon() {
+  updateClearState();
+  window.clearTimeout(saveTimer);
+  saveTimer = window.setTimeout(saveNow, SAVE_DEBOUNCE_MS);
+}
+
+function restorePaste() {
+  const saved = loadSchedule(pasteStore);
+  if (saved) {
+    schedule.value = saved;
+    const jobs = countJobs(saved);
+    setStatus("Restored your last paste" + (jobs ? " (" + jobs + " jobs)" : "") + ". Clear it to start a new batch.");
+    noteSaved(SAVE.OK);
+  }
+  updateClearState();
+}
+
+schedule.addEventListener("input", saveSoon);
+schedule.addEventListener("blur", saveNow);
+// Closing the tab inside the debounce window must not lose the last keystrokes.
+window.addEventListener("pagehide", saveNow);
+window.addEventListener("beforeunload", saveNow);
+
+clear.addEventListener("click", () => {
+  schedule.value = "";
+  clearSchedule(pasteStore);
+  unmapped.innerHTML = "";
+  noteSaved(SAVE.EMPTY);
+  setStatus("Cleared. Paste the next batch when you're ready.");
+  updateClearState();
+  schedule.focus();
+});
+
+restorePaste();
 
 function takeFile(file) {
   if (!file) return false;

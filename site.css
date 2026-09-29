@@ -289,6 +289,8 @@ textarea:focus { border-color: rgba(110, 155, 255, .6); box-shadow: 0 0 0 3px rg
     0 6px 18px rgba(110, 155, 255, .22);
 }
 .btn.ghost { background: rgba(255, 255, 255, .03); }
+/* Secondary actions (Clear paste) sit beside the main button instead of owning the row. */
+.btn.compact { width: auto; flex: 0 1 auto; padding: 0 18px; }
 .btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, .07);
   transform: translateY(-2px);
@@ -314,12 +316,19 @@ a.download {
 #unmapped ul { margin: 12px 0 0; padding-left: 20px; color: var(--muted); font-size: 13.5px; }
 #unmapped li { margin: 4px 0; }
 
+/* "Saved in this browser…" line under the paste box. Kept in the layout even when
+   empty so the buttons never jump when the note appears. */
+.saved-note { min-height: 1.3em; margin: 10px 0 0; font-size: 12.5px; color: var(--muted); }
+.saved-note:not(:empty)::before { content: "▸ "; color: var(--ok); }
+
 .foot { text-align: center; color: var(--faint); font-size: 12.5px; margin-top: 22px; }
 
 @media (max-width: 760px) {
   .grid { grid-template-columns: 1fr; }
   .top { flex-wrap: wrap; }
   .btn { width: 100%; }
+  /* Full-width again on phones — easier to hit with a thumb. */
+  .btn.compact { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

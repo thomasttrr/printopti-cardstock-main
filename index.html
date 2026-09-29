@@ -35,9 +35,14 @@
         </div>
         <label class="sr" for="schedule">Sheeted Print Schedule</label>
         <textarea id="schedule" spellcheck="false" placeholder="Paste the batch table here…"></textarea>
+        <p id="saved-note" class="saved-note" aria-live="polite"></p>
         <div class="row">
           <button id="sheet" type="button" class="btn ghost">
             <span class="btn-label">Open pull sheet</span>
+            <span class="circle-overlay" aria-hidden="true"></span>
+          </button>
+          <button id="clear" type="button" class="btn ghost compact" title="Erase the paste and the copy saved in this browser">
+            <span class="btn-label">Clear paste</span>
             <span class="circle-overlay" aria-hidden="true"></span>
           </button>
         </div>
@@ -71,7 +76,7 @@
 
     <footer class="foot">Runs entirely in your browser · PDF + schedule never leave this device</footer>
   </main>
-  <script type="module" src="app.js?v=9"></script>
+  <script type="module" src="app.js?v=10"></script>
   <script src="aurora.js"></script>
 </body>
 </html>
