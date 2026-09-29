@@ -1,6 +1,7 @@
 import * as pdfjs from "./vendor/pdf.mjs";
 import { PDFDocument } from "./vendor/pdf-lib.esm.min.js";
 import init, { plan_order, pull_sheet } from "./pkg/printopti_wasm.js";
+import { normalizeSchedule } from "./schedule-normalize.js";
 
 const MAX_SCHEDULE_CHARS = 2 * 1024 * 1024;
 const MAX_PDF_BYTES = 200 * 1024 * 1024;
@@ -42,7 +43,7 @@ function scheduleText() {
     setStatus("The schedule is too large to read.", true);
     return null;
   }
-  return text;
+  return normalizeSchedule(text);
 }
 
 function takeFile(file) {
